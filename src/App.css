@@ -36,3 +36,12 @@
     transform: rotate(360deg);
   }
 }
+
+.card {
+  padding: 20px;
+  border: 1px solid black;
+  text-align: center;
+  background-color: white;
+  position: relative;
+  transition: box-shadow 1s linear;
+}

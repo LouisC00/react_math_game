@@ -15,71 +15,48 @@ const generateCard = () => {
 const Game = () => {
   const [cards, setCards] = useState(Array.from({ length: 9 }, generateCard));
   const [hearts, setHearts] = useState(999);
+  const [typedCardIds, setTypedCardIds] = useState([]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key >= "0" && event.key <= "9") {
         let newInput = event.key;
-        let anyMatchFound = false;
-        let anyCompleteMatch = false;
         let matches = [];
+        let correctInput = false;
 
         const newCards = cards.map((card) => {
-          if (card.answer.startsWith(card.typed + newInput)) {
-            anyMatchFound = true;
+          if (
+            (typedCardIds.length === 0 || typedCardIds.includes(card.id)) &&
+            card.answer.startsWith(card.typed + newInput)
+          ) {
             let updatedTyped = card.typed + newInput;
+            correctInput = true;
             if (updatedTyped === card.answer) {
-              anyCompleteMatch = true;
-              return generateCard();
+              return generateCard(); // Generates a new card
             }
-            matches.push(card.id);
+            matches.push(card.id); // Track card as matched
             return { ...card, typed: updatedTyped };
           }
           return card;
         });
 
-        if (!anyMatchFound) {
-          setHearts((hearts) => Math.max(0, hearts - 1));
-          newCards.forEach((card) => (card.typed = "")); // Reset typed if no matches
-        } else {
-          setCards(newCards);
+        setCards(newCards); // Always update cards state
+        if (!correctInput) {
+          setHearts((hearts) => Math.max(0, hearts - 1)); // Reduce hearts only if no matches and no completions
         }
 
-        if (anyCompleteMatch || matches.length === 0) {
-          setCards((cards) =>
-            cards.map((card) => ({
-              ...card,
-              typed: "",
-            }))
-          );
+        if (matches.length === 0) {
+          // Reset the typing on all cards if any card completes or no matches at all
+          setCards(newCards.map((card) => ({ ...card, typed: "" })));
         }
+
+        setTypedCardIds(matches); // Update which cards are being typed
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [cards]);
-
-  useEffect(() => {
-    const intervalIds = cards.map((card, index) => {
-      const intervalId = setInterval(() => {
-        setCards((prevCards) => {
-          const newCards = [...prevCards];
-          if (newCards[index].time > 0) {
-            newCards[index].time -= 1;
-          } else {
-            clearInterval(intervalId);
-            newCards[index] = generateCard();
-            setHearts((hearts) => Math.max(0, hearts - 1));
-          }
-          return newCards;
-        });
-      }, 1000);
-      return intervalId;
-    });
-
-    return () => intervalIds.forEach((intervalId) => clearInterval(intervalId));
-  }, [cards]);
+  }, [cards, typedCardIds]); // Dependencies must include all state that the effect uses
 
   return (
     <div>
