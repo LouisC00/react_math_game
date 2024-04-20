@@ -40,14 +40,21 @@ const Game = () => {
           return card;
         });
 
-        setCards(newCards); // Always update cards state
         if (!correctInput) {
-          setHearts((hearts) => Math.max(0, hearts - 1)); // Reduce hearts only if no matches and no completions
-        }
-
-        if (matches.length === 0) {
-          // Reset the typing on all cards if any card completes or no matches at all
-          setCards(newCards.map((card) => ({ ...card, typed: "" })));
+          // Reduce hearts only if no correct input
+          setHearts((hearts) => Math.max(0, hearts - 1));
+          // Reset the typing on all cards
+          const resetCards = newCards.map((card) => ({ ...card, typed: "" }));
+          // Check for any potential matches with new input among reset cards
+          const finalCards = resetCards.map((card) => {
+            if (card.typed === "" && card.answer.startsWith(newInput)) {
+              return { ...card, typed: newInput };
+            }
+            return card;
+          });
+          setCards(finalCards);
+        } else {
+          setCards(newCards); // Update cards state with correct input
         }
 
         setTypedCardIds(matches); // Update which cards are being typed
@@ -56,7 +63,7 @@ const Game = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [cards, typedCardIds]); // Dependencies must include all state that the effect uses
+  }, [cards, typedCardIds, hearts]);
 
   return (
     <div>
